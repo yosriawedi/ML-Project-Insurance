@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Détection d'anomalies - Assurance</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; }
+    h1 { color: #333; }
+    form, .result-card {
+      background: #fff; padding: 1rem; border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      max-width: 520px;
+    }
+    form { margin-bottom: 1.5rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input, select, button {
+      margin-top: 0.2rem; width: 100%; padding: 0.5rem;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    button { background: #0078D7; color: #fff; border: none; cursor: pointer; margin-top: 1rem; }
+    button:hover { background: #005a9e; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .anomaly { color: #c62828; font-weight: bold; }
+    .normal { color: #2e7d32; font-weight: bold; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
+    .muted { color:#666; font-size: 0.9rem; margin-top: .5rem;}
+  </style>
+</head>
+<body>
+  <h1>Détection d'assurés atypiques</h1>
+
+  <form id="form">
+    <div class="row">
+      <label>Âge <input type="number" name="age" required /></label>
+      <label>BMI <input type="number" step="0.1" name="bmi" required /></label>
+    </div>
+    <div class="row">
+      <label>Enfants <input type="number" name="children" required /></label>
+      <label>Charges <input type="number" step="0.1" name="charges" required /></label>
+    </div>
+    <div class="row">
+      <label>Sexe
+        <select name="sex">
+          <option value="male">male</option>
+          <option value="female">female</option>
+        </select>
+      </label>
+      <label>Fumeur
+        <select name="smoker">
+          <option value="yes">yes</option>
+          <option value="no">no</option>
+        </select>
+      </label>
+    </div>
+    <label>Région
+      <select name="region">
+        <option value="northeast">northeast</option>
+        <option value="northwest">northwest</option>
+        <option value="southeast">southeast</option>
+        <option value="southwest">southwest</option>
+      </select>
+    </label>
+    <button type="submit">Prédire</button>
+    <div class="muted">Astuce : change les valeurs pour simuler des profils.</div>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    const resultsDiv = document.getElementById("results");
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultsDiv.innerHTML = "<div class='result-card'>⏳ Calcul en cours...</div>";
+
+      const formData = new FormData(e.target);
+      const json = Object.fromEntries(formData.entries());
+      json.age = parseFloat(json.age);
+      json.bmi = parseFloat(json.bmi);
+      json.children = parseInt(json.children);
+      json.charges = parseFloat(json.charges);
+
+      try {
+        const r = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(json),
+        });
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`HTTP ${r.status} — ${text}`);
+        }
+        const result = await r.json();
+
+        const rows = [
+          ["ocsvm_A_score", result.ocsvm_A_score],
+          ["ocsvm_A_anomaly", result.ocsvm_A_anomaly],
+          ["ocsvm_B_score", result.ocsvm_B_score],
+          ["ocsvm_B_anomaly", result.ocsvm_B_anomaly],
+          ["iforest_A_score", result.iforest_A_score],
+          ["iforest_A_anomaly", result.iforest_A_anomaly],
+          ["iforest_B_score", result.iforest_B_score],
+          ["iforest_B_anomaly", result.iforest_B_anomaly],
+        ];
+
+        let html = "<div class='result-card'><h3>Résultats des modèles</h3><div class='grid'>";
+        for (const [k, v] of rows) {
+          const isAnom = String(k).includes("anomaly");
+          const val = typeof v === "number" ? (isAnom ? v : Number(v).toFixed(3)) : v;
+          html += `<div><strong>${k}</strong><br>${
+            isAnom ? (val === 1 ? "<span class='anomaly'>⚠️ Anomalie</span>" : "<span class='normal'>✅ Normal</span>") : val
+          }</div>`;
+        }
+        html += "</div></div>";
+
+        resultsDiv.innerHTML = html;
+      } catch (err) {
+        resultsDiv.innerHTML = `<div class='result-card anomaly'>❌ Erreur : ${err.message}</div>`;
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
