@@ -1,0 +1,55 @@
+{
+  "timestamp": "2025-09-28T23:40:09.789695Z",
+  "dataset_shape": [
+    1325,
+    7
+  ],
+  "target": "charges",
+  "numeric_cols": [
+    "age",
+    "bmi",
+    "children",
+    "region",
+    "sex_male",
+    "smoker_yes"
+  ],
+  "categorical_cols": [],
+  "leaderboard": [
+    {
+      "model": "HistGradientBoosting",
+      "test_mae": 2053.08161141054
+    },
+    {
+      "model": "GradientBoosting",
+      "test_mae": 2152.1646525723995
+    },
+    {
+      "model": "KNN",
+      "test_mae": 3226.9502234200595
+    },
+    {
+      "model": "RandomForest",
+      "test_mae": 3315.5887728473012
+    },
+    {
+      "model": "Log-HistGradientBoosting",
+      "test_mae": 4013.435168951834
+    },
+    {
+      "model": "LinearRegression",
+      "test_mae": 4531.453109697984
+    },
+    {
+      "model": "Ridge",
+      "test_mae": 4534.912910586952
+    },
+    {
+      "model": "SVR_rbf",
+      "test_mae": 7547.4409395986095
+    }
+  ],
+  "best": {
+    "model": "HistGradientBoosting",
+    "test_mae": 2053.08161141054
+  }
+}
